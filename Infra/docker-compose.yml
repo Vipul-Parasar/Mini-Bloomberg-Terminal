@@ -1,3 +1,5 @@
+name: kafka-zkpr-dockerised
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -28,9 +30,10 @@ services:
     networks:
       - kafka-net
 
+  # Optional: data ingestion service
   # data_ingestion:
   #   build:
-  #     context: .
+  #     context: ..
   #     dockerfile: Dockerfile
   #   container_name: data_ingestion
   #   depends_on:
@@ -39,11 +42,10 @@ services:
   #     KAFKA_BOOTSTRAP_SERVERS: kafka:29092
   #     CONFIG_PATH: /app/config/config.json
   #   volumes:
-  #     - ./data_ingestion:/app
+  #     - ../data_ingestion:/app
   #   networks:
   #     - kafka-net
   #   # command: ["python","data_ingestion.py"]
-
 
 networks:
   kafka-net:

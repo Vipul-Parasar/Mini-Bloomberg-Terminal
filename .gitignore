@@ -1,6 +1,15 @@
+# Python
 venv/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# IDE
 .vscode/
+
+# Environment files
 .env
+airflow/.env
+
+# Airflow logs (can get huge)
+airflow/logs/
