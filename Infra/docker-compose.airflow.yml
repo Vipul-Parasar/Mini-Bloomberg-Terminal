@@ -1,94 +1,84 @@
 name: airflow-dockerised
 
 services:
-  postgres:
+  airflow_postgres:
     image: postgres:13
     container_name: airflow_postgres
     environment:
       POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-    networks:
-      - kafka-net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 10s
+    restart: always
 
   airflow-init:
-    image: apache/airflow:2.7.3
-    container_name: airflow-init
+    image: apache/airflow:2.9.1
+    container_name: airflow_init
     env_file:
       - ../airflow/.env
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${POSTGRES_PASSWORD}@postgres/airflow
-      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
-    depends_on:
-      - postgres
-    entrypoint: /bin/bash
-    command:
-      - -c
-      - |
-        airflow db migrate &&
-        airflow users create \
-          --username admin \
-          --firstname Vipul \
-          --lastname Parasar \
-          --role Admin \
-          --email vipul.parasar.global@gmail.com \
-          --password admin123 || true
+      - _PIP_ADDITIONAL_REQUIREMENTS=apache-airflow-providers-postgres
     volumes:
       - ../airflow/dags:/opt/airflow/dags
       - ../airflow/logs:/opt/airflow/logs
       - ../airflow/plugins:/opt/airflow/plugins
-    networks:
-      - kafka-net
-    restart: "no"
-
-  airflow-webserver:
-    image: apache/airflow:2.7.3
-    container_name: airflow_webserver
+    entrypoint: >
+      /bin/bash -c "
+      airflow db upgrade &&
+      airflow users create --username admin --password admin --firstname Vipul --lastname Parasar --role Admin --email vipul.parasar.global@gmail.com || true
+      "
     depends_on:
-      - postgres
-    env_file:
-      - ../airflow/.env
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${POSTGRES_PASSWORD}@postgres/airflow
-      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
-      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    volumes:
-      - ../airflow/dags:/opt/airflow/dags
-      - ../airflow/logs:/opt/airflow/logs
-      - ../airflow/plugins:/opt/airflow/plugins
-    ports:
-      - "8080:8080"
-    command: webserver
-    networks:
-      - kafka-net
+      airflow_postgres:
+        condition: service_healthy
+    restart: on-failure
 
   airflow-scheduler:
-    image: apache/airflow:2.7.3
+    image: apache/airflow:2.9.1
     container_name: airflow_scheduler
-    depends_on:
-      - postgres
     env_file:
       - ../airflow/.env
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${POSTGRES_PASSWORD}@postgres/airflow
-      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
+      - _PIP_ADDITIONAL_REQUIREMENTS=apache-airflow-providers-postgres
     volumes:
       - ../airflow/dags:/opt/airflow/dags
       - ../airflow/logs:/opt/airflow/logs
       - ../airflow/plugins:/opt/airflow/plugins
     command: scheduler
-    networks:
-      - kafka-net
+    depends_on:
+      airflow_postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: always
+
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    container_name: airflow_webserver
+    env_file:
+      - ../airflow/.env
+    environment:
+      - _PIP_ADDITIONAL_REQUIREMENTS=apache-airflow-providers-postgres
+    volumes:
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/logs:/opt/airflow/logs
+      - ../airflow/plugins:/opt/airflow/plugins
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      airflow_postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: always
 
 volumes:
   postgres-db-volume:
-
-networks:
-  kafka-net:
-    external: true

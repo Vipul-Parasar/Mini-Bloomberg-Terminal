@@ -22,15 +22,12 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
       - kafka-net
 
-  # Optional: data ingestion service
   # data_ingestion:
   #   build:
   #     context: ..
@@ -39,13 +36,13 @@ services:
   #   depends_on:
   #     - kafka
   #   environment:
-  #     KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  #     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
   #     CONFIG_PATH: /app/config/config.json
   #   volumes:
   #     - ../data_ingestion:/app
   #   networks:
   #     - kafka-net
-  #   # command: ["python","data_ingestion.py"]
+  #   # command: ["python", "data_ingestion.py"]
 
 networks:
   kafka-net:
