@@ -1,36 +1,43 @@
+# ----------------------------
 # Python
+# ----------------------------
 venv/
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 .ipynb_checkpoints/
 
+# ----------------------------
 # IDE / Editor
+# ----------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# ----------------------------
 # Environment & Secrets
+# ----------------------------
 .env
 *.env
 .env.*
-airflow/.env
 
+# ----------------------------
 # Airflow
+# ----------------------------
+airflow/.env
 airflow/logs/
 airflow/dags/__pycache__/
 airflow/plugins/__pycache__/
 
-# Jupyter Notebook
-*.ipynb_checkpoints
-
+# ----------------------------
 # OS files
+# ----------------------------
 .DS_Store
 Thumbs.db
 
+# ----------------------------
 # Docker / Compose
+# ----------------------------
 *.pid
 *.log
 *.db
